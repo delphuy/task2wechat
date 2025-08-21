@@ -12,6 +12,10 @@ import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
 export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
+        console.log(`Worker: Processing HTTP request for URL: ${request.url}`);
+        console.log(`Worker: env object keys: ${Object.keys(env).join(', ')}`);
+        console.log(`Worker: env.__STATIC_CONTENT is: ${env.__STATIC_CONTENT ? 'defined' : 'undefined'}`);
+        console.log(`Worker: env.__STATIC_CONTENT_MANIFEST is: ${env.__STATIC_CONTENT_MANIFEST ? 'defined' : 'undefined'}`);
 
         // --- A. 处理 API 请求 ---
         if (url.pathname.startsWith('/api/tasks')) {
@@ -81,6 +85,8 @@ export default {
     // Worker 的定时任务处理函数
     async scheduled(event, env, ctx) {
         console.log(`Worker: Scheduled event triggered at ${new Date(event.scheduledTime).toISOString()}`);
+		console.log(`Worker Scheduled: env object keys: ${Object.keys(env).join(', ')}`);
+        console.log(`Worker Scheduled: env.GLOBAL_CONFIG is: ${env.GLOBAL_CONFIG ? 'defined' : 'undefined'}`);
         await handleScheduledTasks(env);
     }
 };
