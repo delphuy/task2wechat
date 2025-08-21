@@ -12,7 +12,7 @@ database_id = "0c7bfa75-e3d8-4597-8908-0c83a13184fb" # 你的 D1 数据库 ID
 # 如果你需要KV存储 (可选，但对于静态文件是必须的)
 [[kv_namespaces]]
 binding = "GLOBAL_CONFIG" # 在 Worker 中通过 env.TASKS_KV 访问
-id = "a68ddfc38d6b483396473cc3d43a1c2a" # 你的 KV 命名空间 ID
+id = "a68ddfc38d6b483396473cc3d43a1c2a" # 你的 KV 命名空间 ID  
 
 # 配置静态文件托管 (Pages 替代方案)
 [site]
