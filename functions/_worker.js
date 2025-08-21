@@ -5,7 +5,7 @@ export async function scheduled(event, env, ctx) {
   await handleScheduledTasks(env);
 }
 
-// 将原 worker.mjs 中的 fetch 函数改为 onRequest
+/* // 将原 worker.mjs 中的 fetch 函数改为 onRequest
 export async function onRequest(context) {
   // context 对象包含了 request, env, next, params 等信息
   const { request, env, next } = context;
@@ -20,7 +20,7 @@ export async function onRequest(context) {
   // 如果不是 API 请求（例如对 index.html 的请求），
   // 则调用 next() 让 Pages 继续处理静态文件服务。
   return next();
-}
+} */
 
 
 // 从 Secrets Store 加载配置
