@@ -373,7 +373,7 @@ async function sendByWechatWork(content, channelConfig, taskChannelConfig = {}) 
   return pushData;
 }
 
-export async function onRequest(context) {
+/* export async function onRequest(context) {
     const { request, env, next } = context;
     const url = new URL(request.url);
 	
@@ -412,4 +412,24 @@ export async function onRequest(context) {
             headers: { 'Content-Type': 'application/json' }
         });
     }
+} */
+
+// *** 临时测试用的 onRequest 函数，请替换掉原来的onRequest ***
+export async function onRequest(context) {
+    const { request, env, next } = context;
+    const url = new URL(request.url);
+
+    // 无论什么请求，只要是 /api/tasks 开头，都返回一个固定JSON
+    if (url.pathname.startsWith('/api/tasks')) {
+        console.log('TEST MODE: Intercepted API task request:', url.pathname, 'Method:', request.method);
+        return new Response(JSON.stringify({ message: "Hello from Pages Function API in test mode!", path: url.pathname, method: request.method }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    // 其他请求继续走静态文件服务
+    console.log('TEST MODE: Passing request to static assets for URL:', url.pathname);
+    return await next(); 
 }
+//
