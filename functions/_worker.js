@@ -12,7 +12,7 @@ export async function onRequest(context) {
   const url = new URL(request.url);
 
   // 检查请求路径是否是 API 路径
-  if (url.pathname.startsWith('/api/task')) {
+  if (url.pathname.startsWith('/api/tasks')) {
     // 如果是 API 请求，调用您的 API 处理函数
     return handleTaskApi(request, url, env);
   }
@@ -116,14 +116,14 @@ async function handleScheduledTasks(env) {
 // API 路由处理 
 async function handleTaskApi(request, url, env) {
   const method = request.method; 
-  if (method === 'POST' && url.pathname  === '/api/task') {
+  if (method === 'POST' && url.pathname  === '/api/tasks') {
     return handleCreateTask(request, env);
   } else if (method === 'GET' && url.pathname  === '/api/tasks') {
     return handleGetTasks(env);
-  } else if (method === 'PUT' && url.pathname.startsWith('/api/task/'))  {
+  } else if (method === 'PUT' && url.pathname.startsWith('/api/tasks/'))  {
     const taskId = url.pathname.split('/')[3]; 
     return handleUpdateTask(request, taskId, env);
-  } else if (method === 'DELETE' && url.pathname.startsWith('/api/task/'))  {
+  } else if (method === 'DELETE' && url.pathname.startsWith('/api/tasks/'))  {
     const taskId = url.pathname.split('/')[3]; 
     return handleDeleteTask(taskId, env);
   }
