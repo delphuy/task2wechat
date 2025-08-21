@@ -220,7 +220,7 @@
                 async saveTask() {
                     try {
                         const method = this.editingTask.id ? 'PUT' : 'POST';
-                        const url = this.editingTask.id ? `/api/task/${this.editingTask.id}` : '/api/task';
+                        const url = this.editingTask.id ? `/api/task/${this.editingTask.id}` : '/api/tasks';
                         
                         const response = await fetch(url, {
                             method: method,
@@ -245,7 +245,7 @@
                 async deleteTask(taskId) {
                     if (confirm('确定要删除此任务吗？')) {
                         try {
-                            const response = await fetch(`/api/task/${taskId}`, {
+                            const response = await fetch(`/api/tasks/${taskId}`, {
                                 method: 'DELETE'
                             });
                             
