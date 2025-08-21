@@ -17,7 +17,7 @@ id = "a68ddfc38d6b483396473cc3d43a1c2a" # 你的 KV 命名空间 ID
 # 配置静态文件托管 (Pages 替代方案)
 [site]
 bucket = "./" # 你的静态文件所在的目录 (项目根目录)
-entry-point = "worker" # 这是 Wrangler 内部用于构建 Worker 的目录名，通常保持默认
+# entry-point = "worker" # 这是 Wrangler 内部用于构建 Worker 的目录名，通常保持默认
 # exclude = ["node_modules", "package.json", "package-lock.json"] # 可以排除不需要上传的文件
 # include = ["public", "dist"] # 可以只包含特定目录
 
