@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定时消息推送管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- 标题栏 -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">定时消息推送管理系统</h1>
+            <p class="text-gray-600 mt-1">基于 Cloudflare Workers 实现的任务调度与消息推送平台</p>
+        </div>
+        <!-- 任务列表卡片 -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">任务列表</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 task-table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">任务ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">内容</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">渠道</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">下次执行时间</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">已执行次数</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr v-for="task in tasks" :key="task.id" class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ task.id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ task.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs truncate">{{ task.content }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ task.channel === 'server_chan' ? 'Server酱' : '企业微信' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <span :class="{'text-green-600': task.status, 'text-red-600': !task.status}">
+                                    {{ task.status ? '启用' : '停用' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ task.type === 'single' ? '单次' : '循环' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ task.execute_time }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ task.execute_count }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                <button @click="editTask(task)" class="text-indigo-600 hover:text-indigo-900">
+                                    <i class="fas fa-edit mr-1"></i>编辑
+                                </button>
+                                <button @click="deleteTask(task.id)" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash-alt mr-1"></i>删除
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- 新增任务按钮 -->
+        <div class="mb-6">
+            <button @click="newTask" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center">
+                <i class="fas fa-plus mr-2"></i>新增任务
+            </button>
+        </div>
+        <!-- 任务弹窗 -->
+        <div v-if="showModal" class="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">
+                        {{ editingTask.id ? '编辑任务' : '新增任务' }}
+                    </h3>
+                    <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="px-6 py-4">
+                    <form @submit.prevent="saveTask">
+                        <div class="grid grid-cols-1 gap-4">
+                            <!-- 任务名称 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">任务名称</label>
+                                <input v-model="editingTask.name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <!-- 推送内容 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">推送内容</label>
+                                <textarea v-model="editingTask.content" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+                            <!-- 推送渠道 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">推送渠道</label>
+                                <select v-model="editingTask.channel" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="server_chan">Server酱</option>
+                                    <option value="wechat_work">企业微信</option>
+                                </select>
+                            </div>
+                            <!-- 渠道专属配置 -->
+                            <div v-if="editingTask.channel === 'wechat_work'" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">接收人 ID</label>
+                                    <input v-model="editingTask.channel_config.touser" placeholder="@all" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">接收部门 ID</label>
+                                    <input v-model="editingTask.channel_config.toparty" placeholder="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">接收标签 ID</label>
+                                    <input v-model="editingTask.channel_config.totag" placeholder="TagID1|TagID2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
+                            <!-- 任务类型 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">任务类型</label>
+                                <select v-model="editingTask.type" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="single">单次</option>
+                                    <option value="cycle">循环</option>
+                                </select>
+                            </div>
+                            <!-- 循环任务专属项 -->
+                            <div v-if="editingTask.type === 'cycle'">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">循环周期</label>
+                                <select v-model="editingTask.cycle_config.period" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="day">每天</option>
+                                    <option value="week">每周</option>
+                                    <option value="month">每月</option>
+                                </select>
+                            </div>
+                            <!-- 执行时间 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">执行时间 (ISO 8601)</label>
+                                <input type="datetime-local" v-model="editingTask.execute_time" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <!-- 操作按钮 -->
+                            <div class="flex justify-end space-x-3 pt-4">
+                                <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
+                                    取消
+                                </button>
+                                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out">
+                                    保存
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                tasks: [],
+                showModal: false,
+                editingTask: {
+                    id: '',
+                    name: '',
+                    content: '',
+                    channel: 'server_chan',
+                    channel_config: {},
+                    status: true,
+                    type: 'single',
+                    execute_time: '',
+                    cycle_config: {},
+                    execute_count: 0
+                }
+            },
+            mounted() {
+                this.fetchTasks();
+            },
+            methods: {
+                async fetchTasks() {
+                    try {
+                        const response = await fetch('/api/tasks');
+                        
+                        // 检查响应是否为 JSON
+                        const contentType = response.headers.get('content-type');
+                        if (!contentType || !contentType.includes('application/json')) {
+                            const text = await response.text();
+                            console.error('API 响应不是 JSON:', text);
+                            alert('API 响应错误，请检查后端服务');
+                            return;
+                        }
+                        
+                        const data = await response.json();
+                        this.tasks = data;
+                    } catch (error) {
+                        console.error('网络请求错误:', error);
+                        alert('网络请求失败，请检查您的网络连接或后端服务');
+                    }
+                },
+                newTask() {
+                    this.editingTask = {
+                        id: '',
+                        name: '',
+                        content: '',
+                        channel: 'server_chan',
+                        channel_config: {},
+                        status: true,
+                        type: 'single',
+                        execute_time: new Date().toISOString().slice(0, 16),
+                        cycle_config: {},
+                        execute_count: 0
+                    };
+                    this.showModal = true;
+                },
+                editTask(task) {
+                    this.editingTask = { ...task };
+                    this.showModal = true;
+                },
+                closeModal() {
+                    this.showModal = false;
+                },
+                async saveTask() {
+                    try {
+                        const method = this.editingTask.id ? 'PUT' : 'POST';
+                        const url = this.editingTask.id ? `/api/task/${this.editingTask.id}` : '/api/task';
+                        
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(this.editingTask)
+                        });
+                        
+                        if (response.ok) {
+                            this.closeModal();
+                            this.fetchTasks();
+                        } else {
+                            const errorData = await response.json();
+                            alert(`保存失败: ${errorData.message || '未知错误'}`);
+                        }
+                    } catch (error) {
+                        console.error('保存任务时出错:', error);
+                        alert('保存任务时发生错误，请稍后再试');
+                    }
+                },
+                async deleteTask(taskId) {
+                    if (confirm('确定要删除此任务吗？')) {
+                        try {
+                            const response = await fetch(`/api/task/${taskId}`, {
+                                method: 'DELETE'
+                            });
+                            
+                            if (response.ok) {
+                                this.fetchTasks();
+                            } else {
+                                const errorData = await response.json();
+                                alert(`删除失败: ${errorData.message || '未知错误'}`);
+                            }
+                        } catch (error) {
+                            console.error('删除任务时出错:', error);
+                            alert('删除任务时发生错误，请稍后再试');
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "notification_channels": {
+    "server_chan": {
+      "send_key": "SCT57811TokKonfuVjZ9OLt5LfxinuL9x", // 替换为您的 Server 酱 SendKey
+      "api_prefix": "https://sctapi.ftqq.com/" // Server 酱 API 前缀
+    },
+    "wechat_work": {
+      "corp_id": "wwe2827560da4992c6", // 企业微信企业 ID
+      "agent_id": "1000002", // 企业微信应用 ID
+      "app_secret": "w3wjrcYQ6vpjquGJZ8bXaAgbWqVGdVEZ8F1Of_tLWZ8", // 企业微信应用 Secret
+      "default_receiver": {
+        "touser": "@all", // 默认接收人
+        "toparty": "1", // 默认接收部门 ID
+        "totag": "TagID1|TagID2" // 默认接收标签 ID
+      }
+    }
+  },
+  "time_zone": "Asia/Shanghai", // 时区设置
+  "retry_config": {
+    "max_retry": 3, // 最大重试次数
+    "retry_interval": 5000 // 重试间隔（毫秒）
+  }
+}
