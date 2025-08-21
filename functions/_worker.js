@@ -376,9 +376,12 @@ async function sendByWechatWork(content, channelConfig, taskChannelConfig = {}) 
 export async function onRequest(context) {
     const { request, env, next } = context;
     const url = new URL(request.url);
-
+	
+    console.log('onRequest invoked for URL:', url.pathname, 'Method:', request.method); 
+	
     try {
-        if (url.pathname.startsWith('/api/tasks')) {
+        if (url.pathname.startsWith('/api/tasks')) {			
+			console.log('Handling API task request:', url.pathname); 
             // 确保 handleTaskApi 返回一个 Response 对象
             const response = await handleTaskApi(request, url, env);
             if (response) {
