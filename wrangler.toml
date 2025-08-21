@@ -1,0 +1,28 @@
+name = "task2wechat" # 你的 Worker 名称，可以自定义
+main = "worker.js"   # Worker 的入口文件路径
+compatibility_date = "2025-08-21" # 建议使用最新日期
+compatibility_flags = ["nodejs_compat"] # 如果你的代码使用了Node.js的API，可能需要这个
+
+# 如果你需要D1数据库
+[[d1_databases]]
+binding = "DB" # 在 Worker 中通过 env.DB 访问
+database_name = "timing_push_db" # 你的 D1 数据库名称
+database_id = "0c7bfa75-e3d8-4597-8908-0c83a13184fb" # 你的 D1 数据库 ID
+
+# 如果你需要KV存储 (可选，但对于静态文件是必须的)
+[[kv_namespaces]]
+binding = "GLOBAL_CONFIG" # 在 Worker 中通过 env.TASKS_KV 访问
+id = "a68ddfc38d6b483396473cc3d43a1c2a" # 你的 KV 命名空间 ID
+
+# 配置静态文件托管 (Pages 替代方案)
+[site]
+bucket = "./" # 你的静态文件所在的目录 (项目根目录)
+entry-point = "worker" # 这是 Wrangler 内部用于构建 Worker 的目录名，通常保持默认
+# exclude = ["node_modules", "package.json", "package-lock.json"] # 可以排除不需要上传的文件
+# include = ["public", "dist"] # 可以只包含特定目录
+
+# 开发模式配置 (可选)
+# [dev]
+# ip = "0.0.0.0"
+# port = 8787
+# local_protocol = "http"
