@@ -372,3 +372,41 @@ async function sendByWechatWork(content, channelConfig, taskChannelConfig = {}) 
   }
   return pushData;
 }
+
+export async function onRequest(context) {
+    const { request, env, next } = context;
+    const url = new URL(request.url);
+
+    try {
+        if (url.pathname.startsWith('/api/tasks')) {
+            // 确保 handleTaskApi 返回一个 Response 对象
+            const response = await handleTaskApi(request, url, env);
+            if (response) {
+                return response;
+            } else {
+                // 如果 handleTaskApi 没有返回响应，记录错误并返回通用错误
+                console.error("handleTaskApi did not return a response for:", url.pathname);
+                return new Response(JSON.stringify({ message: "Internal Server Error: API handler did not return a response." }), {
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        }
+
+        // 如果不是 /api/tasks 路径，或者上面的条件不满足
+        // 那么让 Pages 继续处理静态文件。
+        // next() 会让请求继续传递给下一个中间件或Pages的静态文件服务器。
+        return await next(); 
+
+    } catch (error) {
+        console.error("Unhandled error in onRequest:", error);
+        // 返回一个 JSON 格式的错误响应给前端
+        return new Response(JSON.stringify({ 
+            message: "Internal Server Error", 
+            details: error.message || "An unexpected error occurred." 
+        }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+}
